@@ -1,1 +1,9 @@
 *.onnx
+*.mp4
+/default/code/Test/collectionData/Data/ZED2i_Data/imu_data.csv
+/default/code/Test/collectionData/Data/ZED2i_Data1/imu_data.csv
+/default/code/Test/collectionData/Data/ZED2i_Data2/imu_data.csv
+/default/code/Test/collectionData/Data/ZED2i_Data3/imu_data.csv
+/default/code/Test/collectionData/Data/ZED2i_Data4/imu_data.csv
+/StereoCamera/code/Working/StereoCameraFindingDepth/MaskrCNN_model.pt
+/.idea/vcs.xml
