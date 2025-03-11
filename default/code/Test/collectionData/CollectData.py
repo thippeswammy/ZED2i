@@ -1,7 +1,6 @@
 import os
-import threading
+import queue
 import time
-from queue import Queue
 
 import cv2
 import numpy as np
@@ -22,7 +21,7 @@ depth = sl.Mat()
 point_cloud = sl.Mat()
 imu_data = sl.SensorsData()
 
-# Create output directories
+# Create output directory
 output_dir = "ZED2i_Data"
 os.makedirs(output_dir, exist_ok=True)
 os.makedirs(f"{output_dir}/PointCloud", exist_ok=True)
@@ -31,69 +30,18 @@ os.makedirs(f"{output_dir}/PointCloud", exist_ok=True)
 frame_width, frame_height = 1280, 720
 fps = 30
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+
 video_writer_rgb = cv2.VideoWriter(f"{output_dir}/LeftVideo.mp4", fourcc, fps, (frame_width, frame_height))
 video_writer_depth = cv2.VideoWriter(f"{output_dir}/DepthVideo.mp4", fourcc, fps, (frame_width, frame_height))
 
 # IMU Data Storage
 imu_list = []
-imu_lock = threading.Lock()
-
-# Queues for parallel processing
-rgb_queue = Queue()
-depth_queue = Queue()
-pc_queue = Queue()
-imu_queue = Queue()
-
-
-# Function to process and save RGB and Depth video
-def process_video():
-    while True:
-        frame_data = rgb_queue.get()
-        if frame_data is None:
-            break
-        video_writer_rgb.write(frame_data)
-
-        depth_data = depth_queue.get()
-        if depth_data is None:
-            break
-        video_writer_depth.write(depth_data)
-
-
-def process_point_cloud():
-    while True:
-        pc_data = pc_queue.get()
-        if pc_data is None:
-            break
-        frame_count, xyz, colors = pc_data
-        if xyz.shape[0] > 0:
-            pcd = o3d.geometry.PointCloud()
-            pcd.points = o3d.utility.Vector3dVector(xyz)
-            pcd.colors = o3d.utility.Vector3dVector(colors)
-            o3d.io.write_point_cloud(f"{output_dir}/PointCloud/frame_{frame_count}.ply", pcd)
-
-
-def process_imu():
-    while True:
-        imu_data_entry = imu_queue.get()
-        if imu_data_entry is None:
-            break
-        with imu_lock:
-            imu_list.append(imu_data_entry)
-
-
-# Start parallel threads
-video_thread = threading.Thread(target=process_video)
-pc_thread = threading.Thread(target=process_point_cloud)
-imu_thread = threading.Thread(target=process_imu)
-
-video_thread.start()
-pc_thread.start()
-imu_thread.start()
+point_cloud_queue = queue.Queue()
 
 start_time = time.time()
 frame_count = 0
 
-while time.time() - start_time < 15:  # Run for 10 seconds
+while time.time() - start_time < 50:  # Run for 10 seconds
     if zed.grab(runtime_params) == sl.ERROR_CODE.SUCCESS:
         frame_count += 1
 
@@ -101,32 +49,33 @@ while time.time() - start_time < 15:  # Run for 10 seconds
         zed.retrieve_image(image, sl.VIEW.LEFT)
         rgb_image = image.get_data()
         rgb_frame = cv2.cvtColor(rgb_image[:, :, :3], cv2.COLOR_RGB2BGR)
-        rgb_queue.put(rgb_frame)
+        video_writer_rgb.write(rgb_frame)
 
         # Capture Depth Map
         zed.retrieve_measure(depth, sl.MEASURE.DEPTH)
         depth_map = depth.get_data()
         depth_display = cv2.applyColorMap(cv2.convertScaleAbs(depth_map, alpha=255 / 5), cv2.COLORMAP_JET)
-        depth_queue.put(depth_display)
+        video_writer_depth.write(depth_display)
 
-        # Capture Point Cloud
+        # Capture Point Cloud (saved after recording)
         zed.retrieve_measure(point_cloud, sl.MEASURE.XYZRGBA)
         point_cloud_data = point_cloud.get_data()
         xyz = point_cloud_data[:, :, :3].reshape(-1, 3)
         colors = rgb_image[:, :, :3].reshape(-1, 3) / 255.0  # Normalize RGB
 
-        # Filter out invalid depth values
         valid_mask = np.isfinite(xyz).all(axis=1)
         xyz = xyz[valid_mask]
         colors = colors[valid_mask]
-        pc_queue.put((frame_count, xyz, colors))
 
-        # Capture IMU Data
+        if xyz.shape[0] > 0:
+            point_cloud_queue.put((xyz, colors, frame_count))
+
+        # Capture IMU Data (saved after recording)
         zed.get_sensors_data(imu_data, sl.TIME_REFERENCE.CURRENT)
         imu_values = imu_data.get_imu_data()
         acceleration = imu_values.get_linear_acceleration()
         angular_velocity = imu_values.get_angular_velocity()
-        imu_queue.put({
+        imu_list.append({
             "timestamp": time.time(),
             "acceleration_x": acceleration[0],
             "acceleration_y": acceleration[1],
@@ -139,24 +88,22 @@ while time.time() - start_time < 15:  # Run for 10 seconds
         # Display RGB and Depth Maps
         cv2.imshow("RGB Image", rgb_frame)
         cv2.imshow("Depth Map", depth_display)
+
         print(f"✅ Frame {frame_count} collected.")
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
-
-# Stop parallel threads
-rgb_queue.put(None)
-depth_queue.put(None)
-pc_queue.put(None)
-imu_queue.put(None)
-
-video_thread.join()
-pc_thread.join()
-imu_thread.join()
-
-# Save IMU Data
+cv2.destroyAllWindows()
+# Save IMU Data and Point Cloud after recording
 imu_df = pd.DataFrame(imu_list)
 imu_df.to_csv(f"{output_dir}/imu_data.csv", index=False)
+
+while not point_cloud_queue.empty():
+    xyz, colors, frame_idx = point_cloud_queue.get()
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(xyz)
+    pcd.colors = o3d.utility.Vector3dVector(colors)
+    o3d.io.write_point_cloud(f"{output_dir}/PointCloud/frame_{frame_idx}.ply", pcd)
 
 # Release Resources
 video_writer_rgb.release()
