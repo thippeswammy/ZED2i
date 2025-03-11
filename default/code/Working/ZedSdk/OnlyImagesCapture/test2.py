@@ -25,7 +25,6 @@
 
 import cv2
 import pyzed.sl as sl
-import math
 
 # Global variable
 camera_settings = sl.VIDEO_SETTINGS.BRIGHTNESS
@@ -54,8 +53,8 @@ def on_mouse(event, x, y, flags, param):
     if select_in_progress:
         # selection_rect.x = max(min(x, origin_rect[0]),0)
         # selection_rect.y = max(min(y, origin_rect[1]),0)
-        selection_rect.width = max(x,0)
-        selection_rect.height = max(y,0)
+        selection_rect.width = max(x, 0)
+        selection_rect.height = max(y, 0)
 
         # selection_rect.x = min(x, origin_rect[0])
         # selection_rect.y = min(y, origin_rect[1])
@@ -90,7 +89,7 @@ def main():
     # Focal length of the right eye in pixels
     focal_right_x = calibration_params.right_cam.fx
 
-    focalLengthMeter=calibration_params.left_cam.focal_length_metric
+    focalLengthMeter = calibration_params.left_cam.focal_length_metric
 
     # First radial distortion coefficient
     k1 = calibration_params.left_cam.disto[0]
@@ -105,8 +104,9 @@ def main():
 
     # ==============================================================
     print("-" * 20)
-    print("focal_left_x =",focal_left_x," || focal_right_x =",focal_right_x," || focal length in meter =",focalLengthMeter)
-    print("h_fov =",h_fov,"v_fov =",v_fov)
+    print("focal_left_x =", focal_left_x, " || focal_right_x =", focal_right_x, " || focal length in meter =",
+          focalLengthMeter)
+    print("h_fov =", h_fov, "v_fov =", v_fov)
     print("k1 =", k1)
     # print("tz =", tz)
     print("h_fov =", h_fov)
@@ -124,11 +124,13 @@ def main():
             #                   (selection_rect.width + selection_rect.x, selection_rect.height + selection_rect.y),
             #                   (220, 180, 20), 2)
             # print(cvImage.shape[1],"==================",cvImage.shape[0])
-            selection_rect.width=max(min(selection_rect.width,WIDTH),1)
-            selection_rect.height=max(min(selection_rect.height,HIGHT),1)
-            if (not selection_rect.is_empty()):  # Check if selection rectangle is valid and draw it on the image
-                cv2.rectangle(cvImage, (min(selection_rect.x,selection_rect.width),min(selection_rect.y,selection_rect.height)),
-                              (max(selection_rect.x,selection_rect.width), max(selection_rect.y,selection_rect.height)),
+            selection_rect.width = max(min(selection_rect.width, WIDTH), 1)
+            selection_rect.height = max(min(selection_rect.height, HIGHT), 1)
+            if not selection_rect.is_empty():  # Check if selection rectangle is valid and draw it on the image
+                cv2.rectangle(cvImage, (
+                    min(selection_rect.x, selection_rect.width), min(selection_rect.y, selection_rect.height)),
+                              (max(selection_rect.x, selection_rect.width),
+                               max(selection_rect.y, selection_rect.height)),
                               (220, 180, 20), 2)
             cv2.imshow(win_name, cvImage)  # Display image
         else:

@@ -18,10 +18,13 @@ image_zedR = sl.Mat()
 i = 0
 print("Press 's' to save images and 'q' to quit")
 
+cv2.namedWindow("Right Image", cv2.WINDOW_NORMAL)
+cv2.namedWindow("Left Image", cv2.WINDOW_NORMAL)
 while True:
     # Grab a new frame
     runtime_parameters = sl.RuntimeParameters()
     if cam.grab(runtime_parameters) == sl.ERROR_CODE.SUCCESS:
+
         # Retrieve left and right images from the ZED camera
         cam.retrieve_image(image_zedL, sl.VIEW.LEFT)
         cam.retrieve_image(image_zedR, sl.VIEW.RIGHT)
@@ -39,6 +42,7 @@ while True:
         if key == ord('s'):  # Save images if 's' is pressed
             filename_left = f"left_image_{i}.png"
             filename_right = f"right_image_{i}.png"
+
             image_zedL.write(filename_left)
             image_zedR.write(filename_right)
             print(f"Saved: {filename_left} and {filename_right}")
