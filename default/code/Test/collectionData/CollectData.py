@@ -5,7 +5,6 @@ import time
 
 import cv2
 import numpy as np
-import open3d as o3d
 import pandas as pd
 import pyzed.sl as sl
 
@@ -64,32 +63,15 @@ def save_imu_data():
         imu_list.append(data)
 
 
-# Function to save Point Cloud asynchronously
-def save_point_cloud():
-    while True:
-        frame_id, xyz, colors = pcd_queue.get()
-        if frame_id is None:
-            break
-        if xyz.shape[0] > 0:  # Save only if valid points exist
-            pcd = o3d.geometry.PointCloud()
-            pcd.points = o3d.utility.Vector3dVector(xyz)
-            pcd.colors = o3d.utility.Vector3dVector(colors)
-            o3d.io.write_point_cloud(f"{output_dir}/PointCloud/frame_{frame_id}.ply", pcd)
-
-
 # Start saving threads
 imu_thread = threading.Thread(target=save_imu_data, daemon=True)
-pcd_thread = threading.Thread(target=save_point_cloud, daemon=True)
 
 imu_thread.start()
-pcd_thread.start()
 
 start_time = time.time()
 frame_count = 0
 
-while time.time() - start_time < 50:  # Run for 100 seconds
-    if cv2.waitKey(1) == ord('q'):
-        break
+while cv2.waitKey(1) != ord('q'):
     if zed.grab(runtime_params) == sl.ERROR_CODE.SUCCESS:
         frame_count += 1
 
@@ -153,9 +135,6 @@ while time.time() - start_time < 50:  # Run for 100 seconds
         cv2.imshow("Left Image", left_frame)
         cv2.imshow("Right Image", right_frame)
         cv2.imshow("Depth Map", depth_display)
-
-        print(f"✅ Frame {frame_count} collected. Position: ({position_x:.3f}, {position_y:.3f}, {position_z:.3f})")
-
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
@@ -176,7 +155,6 @@ imu_df = pd.DataFrame(imu_list)
 imu_df.to_csv(f"{output_dir}/imu_data.csv", index=False)
 print("imu_list saved Wait...")
 imu_thread.join()
-pcd_thread.join()
 print("Point Clouds is also saved saved Wait...")
 zed.close()
 cv2.destroyAllWindows()
