@@ -106,7 +106,7 @@ def main():
 
     roi_running = False
     roi_param = sl.RegionOfInterestParameters()
-    roi_param.auto_apply = True
+    # roi_param.auto_apply = True
     roi_param.depth_far_threshold_meters = 2.5
     roi_param.image_height_ratio_cutoff = 0.5
     zed.start_region_of_interest_auto_detection(roi_param)

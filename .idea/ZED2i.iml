@@ -4,8 +4,9 @@
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/default/code/Working/ZedSdk/body tracking/body tracking/python/.ipynb_checkpoints" />
       <excludeFolder url="file://$MODULE_DIR$/stereoImageProcessing/code/NotWorking/ONNX-HITNET-Stereo-Depth-estimation-main/models" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.10 (PythonCuda)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.8 (ZED2i)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PyDocumentationSettings">

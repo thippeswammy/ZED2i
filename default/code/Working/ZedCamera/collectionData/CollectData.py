@@ -56,8 +56,7 @@ def create_output_directories(output_dir):
     os.makedirs(output_dir, exist_ok=True)
 
 
-def initialize_video_writers(args, output_dir):
-    frame_width, frame_height = 1280, 720  # Adjust based on resolution if needed
+def initialize_video_writers(args, output_dir, frame_width, frame_height):
     fps = args.fps
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 
@@ -113,7 +112,10 @@ def main():
     output_dir = args.output_dir
     create_output_directories(output_dir)
 
-    video_writers = initialize_video_writers(args, output_dir)
+    image_size = zed.get_camera_information().camera_configuration.resolution
+    frame_width, frame_height = image_size.width, image_size.height
+
+    video_writers = initialize_video_writers(args, output_dir, frame_width, frame_height)
 
     imu_queue = queue.Queue()
     imu_file = initialize_imu_file(output_dir)
@@ -130,8 +132,7 @@ def main():
 
             if args.save_option in ["All", "ColorImages", "RGBDepth"]:
                 zed.retrieve_image(image_left, sl.VIEW.LEFT)
-                left_frame = cv2.cvtColor(image_left.get_data()[:, :, :3], cv2.COLOR_RGB2BGR)
-
+                left_frame = cv2.cvtColor(image_left.get_data()[:, :, :3], cv2.COLOR_RGBA2BGR)
                 zed.retrieve_image(image_right, sl.VIEW.RIGHT)
                 right_frame = cv2.cvtColor(image_right.get_data()[:, :, :3], cv2.COLOR_RGB2BGR)
 

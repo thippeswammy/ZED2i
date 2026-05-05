@@ -2,3 +2,26 @@
 *.mp4
 *.pt
 /.idea/vcs.xml
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Data and Images
+*.png
+*.jpg
+*.jpeg
+*.svo
+*.npy
+*.avi
+*.mp4
+*.wmv
+*.mov
+**/Data/
+**/Session*/
+**/ZED2i_Data*/
+**/lastimages*/
+**/OnlyImagesCapture/
+Data_Zed2i
+Data_RealSense

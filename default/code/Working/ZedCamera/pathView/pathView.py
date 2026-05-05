@@ -15,5 +15,5 @@ plt.ylabel("Z Position (m)")
 plt.title("Top View of Traveled Path")
 plt.legend()
 plt.grid()
-plt.axis("equal")  # Ensures correct aspect ratio
+plt.axis("equal")
 plt.show()
