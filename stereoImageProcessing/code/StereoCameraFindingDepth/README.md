@@ -1,33 +1,61 @@
-# Stereo Camera Depth Finding
+# 🧠 Stereo Perception & Depth Intelligence
 
-This directory contains Python scripts and Jupyter notebooks for performing object detection and depth estimation using stereo image pairs captured from a ZED camera (or similar stereo setups).
+This module implements a sophisticated object detection and depth estimation pipeline using stereo vision. By leveraging **Mask R-CNN** and **Disparity Analysis**, it translates 2D pixel coordinates into real-world spatial measurements.
 
-## Key Components
+---
 
-### 1. Object Detection & Depth Estimation
-- **`stereoimagedepthfinding.py`**: A comprehensive script that uses a Mask R-CNN model (ResNet-50-FPN V2) for object detection and instance segmentation. 
-  - **Functionality**: It matches objects between left and right images using a cost function based on vertical/horizontal displacement and area differences.
-  - **Matching**: Uses the Hungarian algorithm (`linear_sum_assignment`) for optimal object pairing.
-  - **Disparity**: Calculates horizontal disparity to estimate the distance of objects from the camera.
-- **`Stereo_Image_All2.py`**: An optimized version of the depth-finding logic.
-  - Includes specific calibration constants (e.g., `FocalLength`, `tanTheta`) to output real-world depth measurements in centimeters (cm).
-  - Uses a pre-trained `MaskrCNN_model.pt` if available.
-- **`Stereo_Image_v_282.ipynb` & `Stereo_Image_v_167.ipynb`**: Notebook versions of the implementation, useful for interactive experimentation and visualization.
+## 🛠️ Perception Pipeline
 
-### 2. Image Capture
-- **`ZedLeftRightImageCapture.py`**: A utility script to capture and save synchronized left and right image frames from a ZED camera.
-  - **Controls**: Press **'s'** to save a pair of images, **'q'** to quit.
-  - Saves images as `left_image_0X.jpg` and `right_image_0X.jpg`.
+```mermaid
+graph LR
+    L[Left Image] --> D1[Mask R-CNN]
+    R[Right Image] --> D2[Mask R-CNN]
+    D1 --> Match[Cost Matrix & Hungarian Matching]
+    D2 --> Match
+    Match --> Disparity[Disparity Calculation]
+    Disparity --> Depth[Spatial Depth in CM]
+```
 
-## Requirements
-- Python 3.x
-- OpenCV (`cv2`)
-- PyTorch & Torchvision
-- NumPy, Matplotlib, SciPy
-- ZED SDK (`pyzed`)
+## 📦 Key Components
 
-## How it Works
-1. **Capture**: Stereo images are captured (or loaded).
-2. **Detection**: Mask R-CNN identifies objects in both images.
-3. **Tracking/Matching**: The system calculates a "cost" for pairing any object in the left image with any object in the right image.
-4. **Distance Calculation**: Based on the horizontal shift (disparity) between the matched objects and camera calibration parameters, the distance to each object is computed.
+### 🔬 AI Depth Analysis
+- **`stereoimagedepthfinding.py`**: The core research implementation.
+  - Uses **Mask R-CNN ResNet50 FPN V2** for instance segmentation.
+  - Implements a custom **cost function** evaluating:
+    - ↕️ Vertical displacement (scaled penalty)
+    - ↔️ Horizontal movement (direction-aware)
+    - 📐 Area consistency
+  - Utilizes the **Hungarian Algorithm** (`linear_sum_assignment`) for optimal pairing.
+- **`Stereo_Image_All2.py`**: Production-ready script with hardcoded calibration for specific focal lengths, providing instantaneous CM output.
+
+### 📓 Interactive Development
+- **`Stereo_Image_v_282.ipynb`** & **`Stereo_Image_v_167.ipynb`**: Visual playgrounds for tuning thresholds and inspecting segmentation masks.
+
+### 📸 Acquisition
+- **`ZedLeftRightImageCapture.py`**: High-performance capture utility.
+  - **Hotkey 'S'**: Save synchronized image pairs.
+  - **Hotkey 'Q'**: Safe exit and camera release.
+
+---
+
+## ⚙️ Configuration & Requirements
+
+> [!IMPORTANT]
+> The depth finding accuracy is highly dependent on the `FocalLength` and `tanTheta` parameters in `Stereo_Image_All2.py`. Adjust these based on your specific ZED2i calibration.
+
+### Dependencies
+```bash
+pip install torch torchvision opencv-python scipy matplotlib numpy
+```
+
+---
+
+## 📊 Logic Visualization
+
+The tracking cost $C$ is calculated as:
+$$C = \gamma \cdot |V_{dist}| + \beta \cdot |H_{dist}|_{penalized} + \frac{A_{diff}}{\alpha}$$
+
+Where:
+- $\gamma$ = Vertical penalty (Objects shouldn't shift vertically)
+- $\beta$ = Horizontal move penalty (Enforces stereo geometry)
+- $\alpha$ = Area normalization factor

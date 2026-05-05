@@ -1,28 +1,47 @@
-# Specialized Data Collection
+# 🛠️ Specialized Collection Suite
 
-This subdirectory contains specialized tools for ZED camera data acquisition, likely used for specific dataset gathering (e.g., "samsang" project).
+Custom-tailored acquisition profiles for the **ZED2i** camera, optimized for specific dataset requirements and research projects (e.g., Samsung Perception Project).
 
-## Key Component
+---
 
-### `CollectData.py`
-A highly configurable script for capturing ZED camera data with flexible saving options.
+## 🚀 Configurable Capture: `CollectData.py`
 
-#### Features:
-- **Save Options**: Can be configured to save different subsets of data:
-  - `All`: Saves Color Videos (Left/Right), Depth Video, and IMU data.
-  - `ColorImages`: Saves only left/right color videos.
-  - `IMU`: Saves only the `imu_data.csv`.
-  - `RGBDepth`: Saves color and depth videos.
-- **Performance**: Uses optimized OpenCV settings and multi-threading for IMU logging to minimize frame drops.
-- **Positional Tracking**: Enables ZED's positional tracking to log camera translation (X, Y, Z) alongside IMU acceleration and angular velocity.
+This script provides granular control over which data streams are prioritized, allowing for reduced CPU overhead when specific sensors aren't required.
 
-## Usage
+### 📡 Available Profiles
+
+> [!NOTE]
+> All profiles utilize multi-threaded IMU writing to ensure zero frame-drop during high-speed movement.
+
+| Profile | Description | Saved Artifacts |
+| :--- | :--- | :--- |
+| `All` | Complete spatial dataset. | Color (L/R), Depth Video, IMU CSV |
+| `ColorImages` | High-fidelity visual only. | Left & Right MP4 |
+| `IMU` | Motion-only capture. | imu_data.csv |
+| `RGBDepth` | Visual and depth fusion. | Left Color, Depth Map MP4 |
+
+---
+
+## 🛠️ Optimization Features
+
+- **⚡ Optimized OpenCV**: Explicitly uses `cv2.setUseOptimized(True)` and sets thread counts for efficient image processing.
+- **🎯 Positional Tracking**: Enables ZED's spatial mapping to provide absolute world-coordinates ($X, Y, Z$) in addition to raw IMU readings.
+- **⚖️ Quality Control**: Enforces confidence thresholds (`texture_confidence_threshold`) to ensure depth maps only contain high-reliability data.
+
+---
+
+## 📖 Execution Guide
+
 ```bash
-python CollectData.py --output_dir ./ProjectData --save_option All --fps 30
+# Example: High-speed IMU and Color capture
+python CollectData.py --output_dir ./Session_01 --save_option All --fps 60 --resolution HD720
 ```
 
-### Arguments:
-- `--output_dir`: Where to save the captured files.
-- `--resolution`: Camera resolution (`HD720`, `HD1080`, `HD2K`).
-- `--fps`: Supported values: `15`, `30`, `60`, `120`.
-- `--save_option`: `All`, `ColorImages`, `IMU`, or `RGBDepth`.
+### Argument Reference
+- `--resolution`: Standard ZED formats (`HD720`, `HD1080`, `HD2K`).
+- `--fps`: Valid choices: `15`, `30`, `60`, `120`.
+- `--save_option`: Selection from the profiles listed above.
+
+---
+> [!WARNING]
+> High FPS modes (60/120) require significant disk I/O throughput. Using an SSD for the `--output_dir` is highly recommended.
